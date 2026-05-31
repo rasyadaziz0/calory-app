@@ -1,0 +1,17 @@
+# API Keys - JANGAN pernah commit ini!
+.env
+ 
+# Compiled Java
+*.class
+out/
+build/
+ 
+# IDE
+.idea/
+*.iml
+.vscode/
+ 
+# OS
+.DS_Store
+Thumbs.db
+ 
