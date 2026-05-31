@@ -3,6 +3,7 @@ package Auth.service;
 import Auth.config.AuthConfig;
 import Auth.model.User;
 import Auth.repository.UserRepository;
+import Auth.util.StringParserUtil;
 import Auth.util.TokenValidator;
 
 import com.sun.net.httpserver.HttpServer;
@@ -72,7 +73,7 @@ public class GoogleAuthService implements AuthService {
         return tokenValidator.isTokenValid(user.getAccessToken());
     }
 
-//___________Private helper methods_____________________
+//___________ini private helper method_____________________
 
     private String buildAuthUrl() {
         // Supabase Auth URL for Google provider
@@ -128,7 +129,7 @@ public class GoogleAuthService implements AuthService {
                 if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                     try (InputStream is = exchange.getRequestBody()) {
                         String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                        String accessToken = extractParam(body, "access_token");
+                        String accessToken = StringParserUtil.extractParam(body, "access_token");
                         
                         String response;
                         if (accessToken != null && !accessToken.isEmpty()) {
@@ -180,13 +181,13 @@ public class GoogleAuthService implements AuthService {
             }
 
             String body = response.body();
-            String id = extractJsonValue(body, "id");
-            String email = extractJsonValue(body, "email");
+            String id = StringParserUtil.extractJsonValue(body, "id");
+            String email = StringParserUtil.extractJsonValue(body, "email");
             
             // Nama biasanya berada di dalam user_metadata
-            String name = extractJsonMetadataValue(body, "full_name");
+            String name = StringParserUtil.extractJsonMetadataValue(body, "full_name");
             if (name == null || name.isEmpty()) {
-                name = extractJsonMetadataValue(body, "name");
+                name = StringParserUtil.extractJsonMetadataValue(body, "name");
             }
             if (name == null || name.isEmpty()) {
                 name = "User"; // Fallback name
@@ -202,44 +203,4 @@ public class GoogleAuthService implements AuthService {
         }
     }
 
-//_____________________Util sederhana________________________
-
-    private String extractParam(String query, String key) {
-        if (query == null) return null;
-        for (String param : query.split("&")) {
-            String[] parts = param.split("=", 2);
-            if (parts.length == 2 && parts[0].equals(key)) {
-                return parts[1];
-            }
-        }
-        return null;
-    }
-
-    private String extractJsonValue(String json, String key) {
-        String search = "\"" + key + "\"";
-        int idx = json.indexOf(search);
-        if (idx == -1) return null;
-        int start = json.indexOf("\"", idx + search.length() + 1) + 1;
-        int end   = json.indexOf("\"", start);
-        if(start > 0 && end > start) {
-            return json.substring(start, end);
-        }
-        return null;
-    }
-
-    private String extractJsonMetadataValue(String json, String key) {
-        int metaIdx = json.indexOf("\"user_metadata\"");
-        if (metaIdx == -1) return null;
-        
-        String search = "\"" + key + "\"";
-        int idx = json.indexOf(search, metaIdx);
-        if (idx == -1) return null;
-        
-        int start = json.indexOf("\"", idx + search.length() + 1) + 1;
-        int end   = json.indexOf("\"", start);
-        if(start > 0 && end > start) {
-            return json.substring(start, end);
-        }
-        return null;
-    }
 }
